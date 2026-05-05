@@ -1,5 +1,9 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, Suspense} from "react";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 import { useState, useCallback } from "react";
 import { FileUploadZone } from "@/components/quote/file-upload-zone";
 import { FileCard } from "@/components/quote/file-card";
@@ -20,10 +24,36 @@ const defaultConfig: PrintConfig = {
   scale: 100,
 };
 
-export default function QuotePage() {
-  const { files, isUploading, error, uploadFiles, removeFile, clearFiles } =
-    useFileUpload();
+function QuoteContent() {
   const [configs, setConfigs] = useState<Record<string, PrintConfig>>({});
+  const searchParams = useSearchParams();
+  const showcaseName = searchParams.get("showcaseName");
+  const { files, isUploading, error, uploadFiles, removeFile, clearFiles } = useFileUpload();
+  
+  // Dùng useRef thay vì useState. useRef không gây re-render khi giá trị thay đổi!
+  const hasLoadedFakeFile = useRef(false);
+
+  useEffect(() => {
+    // Chỉ chạy nếu có showcaseName VÀ biến current của ref vẫn là false
+    if (showcaseName && !hasLoadedFakeFile.current) {
+      
+      const fakeBlob = new Blob(["Day la file ao de hien thi UI"], { type: "text/plain" });
+      
+      // Sửa lỗi dấu ngoặc đơn thành ngoặc kép cho ESLint
+      const fakeFile = new File([fakeBlob], `${showcaseName.replace(/\s+/g, "_")}.obj`, { 
+        type: "application/octet-stream" 
+      });
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(fakeFile);
+      uploadFiles(dataTransfer.files);
+
+      // Đánh dấu là đã chạy bằng cách đổi giá trị ref.current
+      hasLoadedFakeFile.current = true;
+    }
+  }, [showcaseName, uploadFiles]);
+  const router = useRouter();
+  const { addToCart } = useCart();
 
   const getConfig = (fileId: string): PrintConfig => {
     return configs[fileId] || defaultConfig;
@@ -40,10 +70,12 @@ export default function QuotePage() {
     [uploadFiles]
   );
 
-  const handleCheckout = () => {
-    // TODO: Navigate to checkout with files and configs
-    console.log("Checkout", { files, configs });
-  };
+  // const handleCheckout = () => {
+  //   // (Tuỳ chọn) Gọi hàm lưu files và configs vào CartContext hoặc state quản lý giỏ hàng ở đây
+
+  //   // Điều hướng sang trang giỏ hàng hoặc thanh toán
+  //   router.push("/checkout"); // Bạn có thể đổi thành "/cart" tùy theo route dự án
+  // };
 
   // Calculate prices for summary
   const priceItems = files.map((file) => {
@@ -70,6 +102,35 @@ export default function QuotePage() {
       },
     };
   });
+
+  const handleAddToCart = () => {
+    // Duyệt qua danh sách file đã tính toán giá để thêm vào giỏ hàng
+    priceItems.forEach((item, index) => {
+      const file = files[index];
+      const config = getConfig(file.id);
+      
+      addToCart({
+        productId: `custom-print-${file.id}`, // Tạo ID tạm cho sản phẩm in custom
+        name: item.name,
+        image: "/placeholder.svg", // Ảnh mặc định cho file 3D
+        price: item.price.total,
+        quantity: item.quantity,
+        specs: {
+          material: config.material,
+          color: config.color,
+          size: `${config.scale}%`,
+        },
+      });
+    });
+
+  };
+
+  const handleCheckoutNow = () => {
+    // Đầu tiên cũng thêm vào giỏ hàng
+    handleAddToCart();
+    // Sau đó điều hướng thẳng sang trang thanh toán (hoặc trang giỏ hàng)
+    router.push("/checkout"); 
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -138,11 +199,27 @@ export default function QuotePage() {
 
             {/* Sticky Price Summary */}
             <div className="lg:self-start">
-              <PriceSummary items={priceItems} onCheckout={handleCheckout} />
+              <PriceSummary 
+                items={priceItems} 
+                onAddToCart={handleAddToCart} 
+                onCheckoutNow={handleCheckoutNow} 
+              />
             </div>
           </div>
         </div>
       </main>
     </div>
+  );
+}
+export default function QuotePage() {
+  return (
+    // Fallback là cái sẽ hiển thị chớp nhoáng trong lúc chờ load tham số URL
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Đang tải công cụ báo giá...</p>
+      </div>
+    }>
+      <QuoteContent />
+    </Suspense>
   );
 }
