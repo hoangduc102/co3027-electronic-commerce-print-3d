@@ -47,12 +47,10 @@ export default function ProductDetailPage({
   });
 
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
-  // NẾU user chưa chọn (chuỗi rỗng) VÀ product đã có data -> tự lấy ID của biến thể đầu tiên
-  const activeVariantId = selectedVariantId || product?.variants?.[0]?.id || "";
 
   const selectedVariant = useMemo(() => {
-    return product?.variants?.find((v) => v.id === activeVariantId) ?? null;
-  }, [product, activeVariantId]);
+    return product?.variants?.find((v) => v.id === selectedVariantId) ?? null;
+  }, [product, selectedVariantId]);
 
   // keep these (scale/qty)
   const [customScale, setCustomScale] = useState(100);
@@ -176,7 +174,7 @@ export default function ProductDetailPage({
                   <Label className="font-bold mb-3 block">Chọn biến thể</Label>
 
                   <RadioGroup
-                    value={activeVariantId}
+                    value={selectedVariantId}
                     onValueChange={setSelectedVariantId}
                     className="flex flex-wrap gap-3"
                   >
@@ -247,13 +245,12 @@ export default function ProductDetailPage({
 
                 <Button
                   className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-foreground font-semibold gap-2 text-base"
-                  disabled={!activeVariantId}
+                  disabled={!selectedVariantId}
                   onClick={() => {
                     if (!selectedVariant) return;
-                    console.log("👉 ĐÂY LÀ VARIANT ID CẦN COPY NÈ:", activeVariantId);
 
                     addToCart({
-                      productId: activeVariantId,
+                      productId: selectedVariantId,
                       name: product.name,
                       image: product.images[0]?.url || "/placeholder.svg",
                       price: calculatedPrice,
