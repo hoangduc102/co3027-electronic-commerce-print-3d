@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -227,7 +228,11 @@ export default function ShowcasePage() {
                         asChild
                         className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-foreground"
                       >
-                        <a href="/quote">In sản phẩm tương tự</a>
+                        <Link 
+                          href={`/quote?showcaseName=${encodeURIComponent(project.title)}`}
+                        >
+                          In sản phẩm tương tự
+                        </Link>
                       </Button>
                     </div>
                   </div>

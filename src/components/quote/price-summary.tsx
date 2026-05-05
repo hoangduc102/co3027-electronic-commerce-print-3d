@@ -6,10 +6,11 @@ import type { PriceBreakdown } from "@/lib/types";
 
 interface PriceSummaryProps {
   items: { name: string; price: PriceBreakdown; quantity: number }[];
-  onCheckout: () => void;
+  onAddToCart: () => void;
+  onCheckoutNow: () => void;
 }
 
-export function PriceSummary({ items, onCheckout }: PriceSummaryProps) {
+export function PriceSummary({ items, onAddToCart, onCheckoutNow }: PriceSummaryProps) {
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("vi-VN").format(value) + "đ";
   };
@@ -58,7 +59,7 @@ export function PriceSummary({ items, onCheckout }: PriceSummaryProps) {
 
             <Button
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-foreground font-semibold gap-2"
-              onClick={onCheckout}
+              onClick={onAddToCart} // <-- Đổi thành onAddToCart
             >
               <ShoppingCart className="h-4 w-4" />
               Thêm vào giỏ hàng
@@ -67,7 +68,7 @@ export function PriceSummary({ items, onCheckout }: PriceSummaryProps) {
             <Button
               variant="outline"
               className="w-full border-2 border-foreground font-semibold gap-2 bg-transparent"
-              onClick={onCheckout}
+              onClick={onCheckoutNow} // <-- Đổi thành onCheckoutNow
             >
               Thanh toán ngay
               <ArrowRight className="h-4 w-4" />
