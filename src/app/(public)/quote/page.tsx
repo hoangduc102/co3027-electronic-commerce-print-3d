@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef} from "react";
+import { useEffect, useRef, Suspense} from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { useState, useCallback } from "react";
@@ -24,7 +24,7 @@ const defaultConfig: PrintConfig = {
   scale: 100,
 };
 
-export default function QuotePage() {
+function QuoteContent() {
   const [configs, setConfigs] = useState<Record<string, PrintConfig>>({});
   const searchParams = useSearchParams();
   const showcaseName = searchParams.get("showcaseName");
@@ -209,5 +209,17 @@ export default function QuotePage() {
         </div>
       </main>
     </div>
+  );
+}
+export default function QuotePage() {
+  return (
+    // Fallback là cái sẽ hiển thị chớp nhoáng trong lúc chờ load tham số URL
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Đang tải công cụ báo giá...</p>
+      </div>
+    }>
+      <QuoteContent />
+    </Suspense>
   );
 }
